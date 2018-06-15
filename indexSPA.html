@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons" rel="stylesheet">
+    <link href="https://unpkg.com/vuetify/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+
+    <!--<script src="http://abc.xyz/path/to/promise/polyfill.js"></script>-->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.24.0/babel.js"></script>
+    <!--<script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>-->
+    <!--<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>-->
+
+    <!--<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.js"></script>-->
+
+</head>
+<body>
+<div id="global">
+    <v-app light>
+        <pretregistre></pretregistre>
+    </v-app>
+</div>
+
+
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+
+<script src="https://unpkg.com/vuetify/dist/vuetify.js"></script>
+
+<script type='text/babel'>
+
+    Vue.use(Vuetify);
+
+    Vue.component("registreTable", {
+        template: `
+        <v-app id="inspire">
+            <div>
+            <v-dialog v-model="dialog" max-width="500px">
+                <v-btn slot="activator" color="primary" dark class="mb-2">Новая задача</v-btn>
+                <v-card>
+                    <v-card-title>
+                        <span class="headline">{{ formTitle }}</span>
+                    </v-card-title>
+                    <v-card-text>
+                        <v-container grid-list-md>
+                            <v-layout wrap>
+                                <v-flex xs12 sm12 md12>
+                                    <v-text-field text-xs-center v-model="editedItem.name"
+                                                  label="Наименование задачи"></v-text-field>
+                                </v-flex>
+                                <v-flex xs12 sm6 md6>
+                                    <v-text-field text-xs-center v-model="editedItem.response"
+                                                  label="Ответственный"></v-text-field>
+                                </v-flex>
+                                <v-flex xs12 sm6 md6>
+                                    <v-text-field v-model="editedItem.datedone" label="Сроки выполнения"></v-text-field>
+                                </v-flex>
+                                <v-flex xs12 sm6 md6>
+                                    <v-text-field v-model="editedItem.editdescrip" label="Примечание"></v-text-field>
+                                </v-flex>
+                                <v-flex xs12 sm6 md6>
+                                    <v-text-field v-model="editedItem.editremark" label="Замечания"></v-text-field>
+                                </v-flex>
+                            </v-layout>
+                        </v-container>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="blue darken-1" flat @click.native="close">Отмена</v-btn>
+                        <v-btn color="blue darken-1" flat @click.native="save">Сохранить</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+                <v-card class="elevation-2">
+                <v-card-title class="headline">Реестр задач</v-card-title>
+                <v-card-text>
+                    <v-data-table
+                        :items="desserts"
+                        :headers="headers"
+                        :search="search"
+                        :pagination.sync="pagination"
+                        rows-per-page-text="Записей на страницу"
+                        class="elevation-1"
+                      >
+                      <template slot="items" scope="props">
+                        <td>{{ props.item.name }}</td>
+                        <td class="text-xs-left">{{ props.item.response }}</td>
+                        <td class="text-xs-left">{{ props.item.datedone }}</td>
+                        <td class="text-xs-left">{{ props.item.editdescrip }}</td>
+                        <td class="text-xs-left">{{ props.item.editremark }}</td>
+                        <td class="justify-center layout px-0">
+                                    <v-btn icon class="mx-0" @click="editItem(props.item)">
+                                        <v-icon color="teal">edit</v-icon>
+                                    </v-btn>
+                                    <v-btn icon class="mx-0" @click="deleteItem(props.item)">
+                                        <v-icon color="pink">delete</v-icon>
+                                    </v-btn>
+                                </td>
+                      </template>
+                    </v-data-table>
+                </v-card-text>
+                </v-card>
+			</div>
+        </v-app>`,
+        data: function(){
+            return {
+                filtre: {
+                    statut: "encours",
+                    debut: "",
+                    fin: ""
+                },
+                dialog: false,
+                headers: [
+                    {text: 'Наименование задачи', align: 'left', sortable: false, value: 'name'},
+                    {text: 'Ответсвенный', align: 'left', value: 'response'},
+                    {text: 'Сроки выполнения', align: 'left', value: 'datedone'},
+                    {text: 'Примечания', align: 'left', value: 'editdescrip'},
+                    {text: 'Замечания', align: 'left', value: 'editremark'},
+                    {text: 'Действия', align: 'left', value: 'name', sortable: false}
+                ],
+                desserts: [],
+                editedIndex: -1,
+                editedItem: {
+                    name: '',
+                    response: '',
+                    datedone: '',
+                    editdescrip: '',
+                    editremark: ''
+                },
+                defaultItem: {
+                    name: '',
+                    response: '',
+                    datedone: '',
+                    editdescrip: '',
+                    editremark: ''
+                },
+
+                pagination: {
+                    rowsPerPage: 5
+                },
+                search: "",
+                erreur: ""
+            }
+        },
+        computed: {
+            formTitle() {
+                return this.editedIndex === -1 ? 'Новая запись' : 'Редактировать запись'
+            }
+        },
+        watch: {
+            dialog(val) {
+                val || this.close()
+            }
+        },
+
+        created() {
+            this.initialize()
+        },
+        methods: {
+            initialize() {
+                this.desserts = [
+                    {
+                        name: 'Задача №1',
+                        response: 'Гнедь Евгений Максимович',
+                        datedone: '21.09.18',
+                        editdescrip: 'Примечание 1',
+                        editremark: 'Замечание 1'
+                    },
+                    {
+                        name: 'Задача №2',
+                        response: 'Павинич Евгений Сергеевич',
+                        datedone: '21.09.18',
+                        editdescrip: 'Примечание 2',
+                        editremark: 'Замечание 2'
+                    },
+                    {
+                        name: 'Задача №3',
+                        response: 'Савиных Виталий Евгеньевич',
+                        datedone: '21.09.18',
+                        editdescrip: 'Примечание 3',
+                        editremark: 'Замечание 3'
+                    },
+                    {
+                        name: 'Задача №4',
+                        response: 'Садовская Евгения Александровна',
+                        datedone: '21.09.18',
+                        editdescrip: 'Примечание 4',
+                        editremark: 'Замечание 4'
+                    },
+                    {
+                        name: 'Задача №5',
+                        response: 'Петров Петр Петрович',
+                        datedone: '21.10.18',
+                        editdescrip: 'Примечание 5',
+                        editremark: 'Замечание 5'
+                    },
+                    {
+                        name: 'Задача №6',
+                        response: 'Петров Петр Петрович',
+                        datedone: '22.09.18',
+                        editdescrip: 'Примечание 6',
+                        editremark: 'Замечание 6'
+                    },
+                    {
+                        name: 'Задача №7',
+                        response: 'Петров Петр Петрович',
+                        datedone: '23.09.18',
+                        editdescrip: 'Примечание 7',
+                        editremark: 'Замечание 7'
+                    },
+                    {
+                        name: 'Задача №8',
+                        response: 'Уваров Андрей Борисович',
+                        datedone: '17.12.18',
+                        editdescrip: 'Примечание 8',
+                        editremark: 'Замечание 9'
+                    },
+                    {
+                        name: 'Задача №9',
+                        response: 'Уваров Андрей Борисович',
+                        datedone: '21.09.18',
+                        editdescrip: 'Примечание 9',
+                        editremark: 'Замечание 9'
+                    },
+                    {
+                        name: 'Задача №10',
+                        response: 'Уваров Андрей Борисович',
+                        datedone: '21.09.18',
+                        editdescrip: 'Примечание 10',
+                        editremark: 'Примечание 10'
+                    }
+                ]
+            },
+            editItem(item) {
+                this.editedIndex = this.desserts.indexOf(item)
+                this.editedItem = Object.assign({}, item)
+                this.dialog = true
+            },
+
+            deleteItem(item) {
+                const index = this.desserts.indexOf(item)
+                confirm('Вы уверены что хотите удалить эту запись?') && this.desserts.splice(index, 1)
+            },
+
+            close() {
+                this.dialog = false
+                setTimeout(() => {
+                    this.editedItem = Object.assign({}, this.defaultItem)
+                    this.editedIndex = -1
+                }, 300)
+            },
+
+            save() {
+                if (this.editedIndex > -1) {
+                    Object.assign(this.desserts[this.editedIndex], this.editedItem)
+                } else {
+                    this.desserts.push(this.editedItem)
+                }
+                this.close()
+            }
+        }
+    });
+
+    Vue.component("pretregistre", {
+        template: `<v-layout row wrap>
+				<h5 v-if="erreur !== ''"><v-icon>warning</v-icon>{{erreur}}</h5>
+					<v-flex xs12>
+						<registreTable></registreTable>
+					</v-flex>
+				</v-layout>
+				`,
+        data: function(){
+            return {
+                html: "",
+                erreur: ""
+            }
+        },
+        methods: {
+            getData: function(){
+
+            }
+        },
+        created: function(){
+
+        }
+    });
+
+
+    var App = new Vue({
+        el: '#global',
+        data: {
+            ajax: 0,
+            name: "Vuetify"
+        },
+        methods: {
+
+        }
+    });
+
+</script>
+</body>
+</html>
